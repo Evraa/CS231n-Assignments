@@ -28,10 +28,11 @@ def svm_loss_naive(W, X, y, reg):
     #Basic counters
     num_classes = W.shape[1] #C
     num_train = X.shape[0] #N
-    #Main Operations
+    dimensions =  X.shape[1] #D
+
+    #Main Operations: Computing the LOSS
     scores = X.dot(W) #(N,C)
     # assert scores.shape == (num_train, num_classes)
-
     #Get the correct values out of the scores
     correct_scores = scores[np.arange(num_train),y] #(N,1)
     #Expand these scores    
@@ -49,6 +50,25 @@ def svm_loss_naive(W, X, y, reg):
     loss+=0.5*reg*np.sum(W*W)
 
 
+    #COMPUTING THE GRAD
+    #derivative of the max operation
+    margins = np.zeros_like(scores_subtracted)
+    margins[scores_subtracted>0]=1 
+
+    assert margins.shape == (num_train, num_classes)
+
+    row_sum = np.sum(margins, axis=1)   # N vector
+    #margins[np.arange(num_train), y]:
+        #margins of 0->499 where j==y
+        #this reduces a vector of size num_train
+    margins[np.arange(num_train), y] = -row_sum
+
+    dW += X.T.dot(margins)     # (D, C)
+    assert dW.shape == (dimensions, num_classes)
+
+    #normalize and add regularizatoin
+    dW/=num_train
+    dW += reg * W
 
     #############################################################################
     # TODO:                                                                     #
@@ -98,8 +118,53 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    #Init
+    dW = np.zeros_like(W)
+    loss = 0
+    delta = 0
+    #Basic counters
+    num_classes = W.shape[1] #C
+    num_train = X.shape[0] #N
+    #Main Operations
+    scores = X.dot(W) #(N,C)
+    # assert scores.shape == (num_train, num_classes)
 
+    #Get the correct values out of the scores
+    correct_scores = scores[np.arange(num_train),y] #(N,1)
+    #Expand these scores    
+    correct_scores = np.repeat(correct_scores,num_classes) #len: N*C -> vector
+    correct_scores = np.reshape(correct_scores,scores.shape) #(N,C)
+    #Subtract the scores and add the margin  then max with zero
+    scores_subtracted = scores - correct_scores + delta
+    scores_subtracted[scores_subtracted<0] = 0 
+    #Remove the correct classes from computations
+    scores_subtracted[np.arange(num_train),y]=0
+    #Sum the loss
+    loss = np.sum(scores_subtracted)
+    loss /= num_train
+    #Add reg
+    loss+=0.5*reg*np.sum(W*W)
+
+    #COMPUTING THE GRAD
+    #derivative of the max operation
+    margins = np.zeros_like(scores_subtracted)
+    margins[scores_subtracted>0]=1 
+
+    assert margins.shape == (num_train, num_classes)
+
+    row_sum = np.sum(margins, axis=1)   # N vector
+    #margins[np.arange(num_train), y]:
+        #margins of 0->499 where j==y
+        #this reduces a vector of size num_train
+    margins[np.arange(num_train), y] = -row_sum
+
+    dW += X.T.dot(margins)     # (D, C)
+    assert dW.shape == (dimensions, num_classes)
+
+    #normalize and add regularizatoin
+    dW/=num_train
+    dW += reg * W
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     return loss, dW
