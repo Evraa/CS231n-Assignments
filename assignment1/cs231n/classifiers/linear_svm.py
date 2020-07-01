@@ -21,28 +21,34 @@ def svm_loss_naive(W, X, y, reg):
     - loss as single float
     - gradient with respect to weights W; an array of same shape as W
     """
-    dW = np.zeros(W.shape) # initialize the gradient as zero
+    #Init
+    dW = np.zeros_like(W)
+    loss = 0
+    delta = 0
+    #Basic counters
+    num_classes = W.shape[1] #C
+    num_train = X.shape[0] #N
+    #Main Operations
+    scores = X.dot(W) #(N,C)
+    # assert scores.shape == (num_train, num_classes)
 
-    # compute the loss and the gradient
-    num_classes = W.shape[1]
-    num_train = X.shape[0]
-    loss = 0.0
-    for i in range(num_train):
-        scores = X[i].dot(W)
-        correct_class_score = scores[y[i]]
-        for j in range(num_classes):
-            if j == y[i]:
-                continue
-            margin = scores[j] - correct_class_score + 1 # note delta = 1
-            if margin > 0:
-                loss += margin
-
-    # Right now the loss is a sum over all training examples, but we want it
-    # to be an average instead so we divide by num_train.
+    #Get the correct values out of the scores
+    correct_scores = scores[np.arange(num_train),y] #(N,1)
+    #Expand these scores    
+    correct_scores = np.repeat(correct_scores,num_classes) #len: N*C -> vector
+    correct_scores = np.reshape(correct_scores,scores.shape) #(N,C)
+    #Subtract the scores and add the margin  then max with zero
+    scores_subtracted = scores - correct_scores + delta
+    scores_subtracted[scores_subtracted<0] = 0 
+    #Remove the correct classes from computations
+    scores_subtracted[np.arange(num_train),y]=0
+    #Sum the loss
+    loss = np.sum(scores_subtracted)
     loss /= num_train
+    #Add reg
+    loss+=0.5*reg*np.sum(W*W)
 
-    # Add regularization to the loss.
-    loss += reg * np.sum(W * W)
+
 
     #############################################################################
     # TODO:                                                                     #
@@ -54,7 +60,6 @@ def svm_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     
