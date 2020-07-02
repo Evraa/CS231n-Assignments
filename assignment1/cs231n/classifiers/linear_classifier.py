@@ -40,10 +40,15 @@ class LinearClassifier(object):
 
         # Run stochastic gradient descent to optimize W
         loss_history = []
+        # divisions = num_train // batch_size
+        # print (divisions)
+        # batch_index = 0
+        
+
         for it in range(num_iters):
             X_batch = None
             y_batch = None
-
+            
             #########################################################################
             # TODO:                                                                 #
             # Sample batch_size elements from the training data and their           #
@@ -57,12 +62,14 @@ class LinearClassifier(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            batch_division = np.random.choice(np.arange(num_train),batch_size)
+            X_batch = X[batch_division]
+            y_batch = y[batch_division]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             # evaluate loss and gradient
-            loss, grad = self.loss(X_batch, y_batch, reg)
+            loss, dW = self.loss(X_batch, y_batch, reg)
             loss_history.append(loss)
 
             # perform parameter update
@@ -72,7 +79,7 @@ class LinearClassifier(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            self.W -= (-dW*learning_rate)
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -95,14 +102,17 @@ class LinearClassifier(object):
           array of length N, and each element is an integer giving the predicted
           class.
         """
-        y_pred = np.zeros(X.shape[0])
+        y_pred = np.zeros(X.shape[0]) #N
         ###########################################################################
         # TODO:                                                                   #
         # Implement this method. Store the predicted labels in y_pred.            #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+        
+        #Get the scores
+        scores = X.dot(self.W)
+        #Get the maximum probability of them
+        y_pred = np.argmax(scores, axis=1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return y_pred
@@ -123,7 +133,7 @@ class LinearClassifier(object):
         - gradient with respect to self.W; an array of the same shape as W
         """
         pass
-
+    
 
 class LinearSVM(LinearClassifier):
     """ A subclass that uses the Multiclass SVM loss function """

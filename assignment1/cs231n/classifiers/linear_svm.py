@@ -125,6 +125,8 @@ def svm_loss_vectorized(W, X, y, reg):
     #Basic counters
     num_classes = W.shape[1] #C
     num_train = X.shape[0] #N
+    dimensions =  X.shape[1] #D
+
     #Main Operations
     scores = X.dot(W) #(N,C)
     # assert scores.shape == (num_train, num_classes)
@@ -164,7 +166,7 @@ def svm_loss_vectorized(W, X, y, reg):
     #normalize and add regularizatoin
     dW/=num_train
     dW += reg * W
-    
+
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     return loss, dW
