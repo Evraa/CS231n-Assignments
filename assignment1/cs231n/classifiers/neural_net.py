@@ -111,7 +111,7 @@ class TwoLayerNet(object):
         exp_sum_scores =  np.sum(exp_scores, axis = 1) #(N,1)
         exp_scoes_at_y = exp_scores[np.arange(N),y] #(N,1)
         loss_i = exp_scoes_at_y / exp_sum_scores
-        loss_i_log = -np.log(loss_i)
+        loss_i_log = -np.log(loss_i+0.00000000001)
         loss = np.sum(loss_i_log) / N
         #adding reg
         loss += reg * (np.sum(W1*W1) + np.sum(W2*W2) + np.sum(b1*b1) + np.sum(b2*b2))
