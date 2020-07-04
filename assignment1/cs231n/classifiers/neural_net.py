@@ -212,7 +212,9 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            batch_division = np.random.choice(np.arange(num_train),batch_size)
+            X_batch = X[batch_division]
+            y_batch = y[batch_division]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -227,8 +229,10 @@ class TwoLayerNet(object):
             # stored in the grads dictionary defined above.                         #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
+            self.params['W1'] += -grads['W1']*learning_rate
+            self.params['b1'] += -grads['b1']*learning_rate
+            self.params['W2'] += -grads['W2']*learning_rate
+            self.params['b2'] += -grads['b2']*learning_rate
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
