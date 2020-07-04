@@ -84,6 +84,7 @@ class TwoLayerNet(object):
         h1 += b1
         #RELU activation ##########IMPORTANT DONT FORGET THE RELU #############
         h1 [h1<0] = 0
+        relu_activation_1 = h1 #different naming for better understanding 
         scores = h1.dot(W2) #(N,C)
         scores += b2
 
@@ -104,8 +105,8 @@ class TwoLayerNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         #Stability fix for softmax loss SHIFTING
-        scores = scores - np.max(scores, axis=1)[..., np.newaxis]
-        
+        scores = scores - np.max(scores, axis=1)[..., np.newaxis] #(N,C)
+
         exp_scores = np.exp(scores) #(N,C)
         exp_sum_scores =  np.sum(exp_scores, axis = 1) #(N,1)
         exp_scoes_at_y = exp_scores[np.arange(N),y] #(N,1)
@@ -125,8 +126,48 @@ class TwoLayerNet(object):
         # grads['W1'] should store the gradient on W1, and be a matrix of same size #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
         
+        # exp_scores is (N,C)
+        # exp_sum_scores is (N,1)
+        #Expand the exp_sum for broadcasting the division operation
+        num_classes = scores.shape[1]
+        exp_sum_scores_expand = np.repeat(exp_sum_scores,num_classes) #len: N*C -> vector
+        exp_sum_scores_expand = np.reshape(exp_sum_scores_expand,exp_scores.shape) #(N,C)
+        
+        softmax_Scores = exp_scores / exp_sum_scores_expand #(N,C)
+        assert softmax_Scores.shape == (N,num_classes)
+
+        #calculate local gradient 2
+        softmax_Scores[np.arange(N), y] -= 1
+        local_grad_2 = softmax_Scores / N
+
+        #Calculate dW2 = local_grad_2 * relu_activation_1       
+        # print (relu_activation_1.shape) (N, l)
+        # print (local_grad_2.shape) (N, K)
+        # print (W2.shape) (l,K)
+
+        dW2 = relu_activation_1.T.dot(local_grad_2)
+        dW2 += 2*reg*W2
+        assert dW2.shape == W2.shape
+        grads['W2'] = dW2
+
+        #Calculate db2 = local_grad_2 * 1
+        db2 = local_grad_2 * 1 #(N,K)
+        grads['b2'] = np.sum(db2, axis=0)        
+
+        # Calculate dx2 and backprop to calculate dRelu1.
+        dx2 = np.dot(local_grad_2, W2.T) #(N,l)
+        relu_mask = (relu_activation_1 > 0)
+        dRelu1= relu_mask*dx2
+
+        #Calculate dW1 = dRelu1 (local) * X (activation) 
+        dW1 = X.T.dot(dRelu1)
+        dW1 += 2*reg*W1
+        assert dW1.shape == W1.shape
+        grads['W1'] = dW1
+
+        db1 = dRelu1 * 1
+        grads['b1'] = np.sum(db1, axis=0)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
