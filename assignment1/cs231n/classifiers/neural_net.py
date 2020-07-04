@@ -80,7 +80,12 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        h1 = X.dot(W1) #(N,L1)
+        h1 += b1
+        #RELU activation ##########IMPORTANT DONT FORGET THE RELU #############
+        h1 [h1<0] = 0
+        scores = h1.dot(W2) #(N,C)
+        scores += b2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -98,7 +103,17 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        #Stability fix for softmax loss SHIFTING
+        scores = scores - np.max(scores, axis=1)[..., np.newaxis]
+        
+        exp_scores = np.exp(scores) #(N,C)
+        exp_sum_scores =  np.sum(exp_scores, axis = 1) #(N,1)
+        exp_scoes_at_y = exp_scores[np.arange(N),y] #(N,1)
+        loss_i = exp_scoes_at_y / exp_sum_scores
+        loss_i_log = -np.log(loss_i)
+        loss = np.sum(loss_i_log) / N
+        #adding reg
+        loss += reg * (np.sum(W1*W1) + np.sum(W2*W2) + np.sum(b1*b1) + np.sum(b2*b2))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -111,7 +126,7 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
