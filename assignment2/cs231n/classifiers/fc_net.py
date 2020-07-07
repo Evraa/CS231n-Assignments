@@ -54,9 +54,19 @@ class TwoLayerNet(object):
         # weights and biases using the keys 'W2' and 'b2'.                         #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        b1 = np.zeros([hidden_dim])
+        b2 = np.zeros([num_classes])
+        W1 = np.random.normal(0, weight_scale,[input_dim, hidden_dim])
+        W2 = np.random.normal(0, weight_scale,[hidden_dim, num_classes])
 
-        pass
+        assert W1.shape == (input_dim, hidden_dim)
+        assert W2.shape == (hidden_dim, num_classes)
 
+        self.params['W1'] = W1
+        self.params['W2'] = W2
+        self.params['b1'] = b1
+        self.params['b2'] = b2
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -88,8 +98,11 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
-
+        L1, L1_cache = affine_forward(X, self.params['W1'], self.params['b1'])
+        L1_ReLu, ReLU_cahce = relu_forward(L1)
+        L2, L2_cache = affine_forward(L1_ReLu, self.params['W2'], self.params['b2'])
+        #No Non-linear activation for the last layer
+        scores = copy.deepcopy(L2)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -112,8 +125,28 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, derv_soft = softmax_loss(scores, y)
+        #add regularization
+        W1 = self.params['W1']
+        W2 = self.params['W2']
+        
+        loss += 0.5*self.reg*(np.sum(W1*W1) + np.sum(W2*W2))
 
+        #GRAD
+
+        dx2, dw2, db2 = affine_backward(derv_soft, L2_cache)
+
+        dReLU1 = relu_backward(dx2, ReLU_cahce)
+
+        dx1, dw1, db1 = affine_backward(dReLU1, L1_cache)
+
+        #Add reg and store
+        grads['W2'] = dw2 + self.reg*self.params['W2']
+        grads['W1'] = dw1 + self.reg*self.params['W1']
+        
+        grads['b1'] = db1
+        grads['b2'] = db2
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
