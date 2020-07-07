@@ -1,6 +1,6 @@
 from builtins import range
 import numpy as np
-
+import copy
 
 
 def affine_forward(x, w, b):
@@ -27,8 +27,8 @@ def affine_forward(x, w, b):
     # will need to reshape the input into rows.                               #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    x_reshaped = np.reshape(x, (x.shape[0], -1))
+    out = np.dot(x_reshaped,w) + b
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -61,8 +61,16 @@ def affine_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x_reshaped = np.reshape(x, (x.shape[0], -1))
+    # the next upstream
+    dx = np.dot(dout, w.T)
+    #reshaping it for further consideration
+    dx = np.reshape(dx, x.shape)
 
+    #local gradient: x_reshaped (activated), upstream: dout
+    dw = np.dot(x_reshaped.T,dout)
+
+    db = np.sum(dout, axis=0)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -86,8 +94,8 @@ def relu_forward(x):
     # TODO: Implement the ReLU forward pass.                                  #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    out = copy.deepcopy(x)
+    out [out < 0] = 0
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -114,7 +122,11 @@ def relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x_masked = copy.deepcopy(x)
+    x_masked[x_masked<0] = 0
+    x_masked[x_masked>0] = 1
+
+    dx = dout * x_masked
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
