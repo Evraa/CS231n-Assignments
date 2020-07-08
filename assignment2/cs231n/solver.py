@@ -146,6 +146,7 @@ class Solver(object):
         self.update_rule = getattr(optim, self.update_rule)
 
         self._reset()
+        print ("initialized")
 
     def _reset(self):
         """
