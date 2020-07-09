@@ -377,16 +377,6 @@ class FullyConnectedNet(object):
 
             dx_final = np.copy (dx)
 
-    
-
-        # #Add reg and store
-        # grads['W2'] = dw2 + self.reg*self.params['W2']
-        # grads['W1'] = dw1 + self.reg*self.params['W1']
-        
-        # grads['b1'] = db1
-        # grads['b2'] = db2
-        
-
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
