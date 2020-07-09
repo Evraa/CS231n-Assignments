@@ -204,6 +204,7 @@ class FullyConnectedNet(object):
           will make the dropout layers deteriminstic so we can gradient check the
           model.
         """
+        # print ("Initializing your model....")
         self.normalization = normalization
         self.use_dropout = dropout != 1
         self.reg = reg
@@ -224,8 +225,20 @@ class FullyConnectedNet(object):
         # parameters should be initialized to zeros.                               #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        first_dim = input_dim
+        for i in range (self.num_layers-1):
+            b_i = "b" + str(i+1)
+            self.params[b_i] = np.zeros([hidden_dims[i]])
+            w_i = "W" + str(i+1)
+            self.params[w_i] = np.random.normal(0, weight_scale,[first_dim, hidden_dims[i]])
+            first_dim = hidden_dims[i]
+        #Last layer
+        b_last = "b" + str(self.num_layers)
+        w_last = "W" + str(self.num_layers)
 
-        pass
+        self.params[b_last] = np.zeros([num_classes])
+        self.params[w_last] = np.random.normal(0, weight_scale,[first_dim, num_classes])
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -256,15 +269,18 @@ class FullyConnectedNet(object):
         for k, v in self.params.items():
             self.params[k] = v.astype(dtype)
 
+        # print ("Init your model...successfully")
+
+
     def loss(self, X, y=None):
         """
         Compute loss and gradient for the fully-connected net.
 
         Input / output: Same as TwoLayerNet above.
         """
+        # print ("Computing the loss")
         X = X.astype(self.dtype)
         mode = "test" if y is None else "train"
-
         # Set train/test mode for batchnorm params and dropout param since they
         # behave differently during training and testing.
         if self.use_dropout:
@@ -286,9 +302,29 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        scores_cache = {}
+        #Caclculate regularization : np.sum(W1*W1) + np.sum(W2*W2)
+        reg_sum = 0
+        #A: activation
+        actv = copy.deepcopy(X)
+        for i in range (self.num_layers - 1):
 
-        pass
+            L, L_cache = affine_forward(actv, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
+            L_ReLu, ReLU_cahce = relu_forward(L)
 
+            scores_cache["L_cache_"+str(i+1)] = L_cache
+            scores_cache["ReLU_cahce_"+str(i+1)] = ReLU_cahce
+            this_W = self.params['W'+str(i+1)]
+            reg_sum += np.sum(this_W*this_W)
+            actv = copy.deepcopy(L_ReLu)
+            
+        L_final, L_cache_final = affine_forward(L_ReLu, \
+            self.params['W'+str(self.num_layers)], self.params['b'+str(self.num_layers)])
+        
+        scores_cache["L_cache_"+str(self.num_layers)] = L_cache_final
+        this_W = self.params['W'+str(self.num_layers)]
+        reg_sum += np.sum(this_W*this_W)
+        scores = np.copy(L_final)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -296,6 +332,7 @@ class FullyConnectedNet(object):
 
         # If test mode return early
         if mode == "test":
+            # print ("test: your score is: ",scores)
             return scores
 
         loss, grads = 0.0, {}
@@ -311,10 +348,44 @@ class FullyConnectedNet(object):
         # NOTE: To ensure that your implementation matches ours and you pass the   #
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
-        ############################################################################
+        ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        loss, derv_soft = softmax_loss(scores, y)
+        loss += 0.5*self.reg*(reg_sum)
+        # print ("Done computing the loss: ",loss)
 
-        pass
+        #GRAD
+        L_cache_final = scores_cache["L_cache_"+str(self.num_layers)]
+
+        dx_final, dw_final, db_final = affine_backward(derv_soft, L_cache_final)
+    
+        grads['W'+str(self.num_layers)] = dw_final + self.reg*self.params['W'+str(self.num_layers)]
+        grads['b'+str(self.num_layers)] = db_final
+        for i in reversed(range(1,self.num_layers)):
+            #loops L-1,L-2,...1
+            #L = 3 -> 2,1
+            #Relu
+            #affine
+            ReLU_cahce = scores_cache["ReLU_cahce_"+str(i)]
+            dReLU = relu_backward(dx_final, ReLU_cahce)
+            
+            L_cache = scores_cache["L_cache_"+str(i)]
+            dx, dw, db = affine_backward(dReLU, L_cache)
+
+            grads['W'+str(i)] = dw + self.reg*self.params['W'+str(i)]
+            grads['b'+str(i)] = db
+
+            dx_final = np.copy (dx)
+
+    
+
+        # #Add reg and store
+        # grads['W2'] = dw2 + self.reg*self.params['W2']
+        # grads['W1'] = dw1 + self.reg*self.params['W1']
+        
+        # grads['b1'] = db1
+        # grads['b2'] = db2
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -322,3 +393,5 @@ class FullyConnectedNet(object):
         ############################################################################
 
         return loss, grads
+
+
