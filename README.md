@@ -10,3 +10,7 @@ Solutions for CS231n assignments
 ### [Softmax](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment1/softmax.ipynb)
 
 ### [NN](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment1/two_layer_net.ipynb)
+
+## [Assignment 2](https://github.com/Evraa/CS231n-Assignments/tree/master/assignment2)
+
+### [Fully Connected Nets](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/FullyConnectedNets.ipynb)
