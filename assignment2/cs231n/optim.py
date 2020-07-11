@@ -169,6 +169,7 @@ def adam(w, dw, config=None):
     v = config ["v"]
     t = config['t'] + 1
     
+    
     m = (beta1*m) + ((1-beta1)*dw)
     mt = m / (1-beta1**t)
 
