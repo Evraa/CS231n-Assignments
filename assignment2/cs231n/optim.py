@@ -108,8 +108,17 @@ def rmsprop(w, dw, config=None):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    assert config['cache'].shape == dw.shape, "error in shapes!"
 
+    learning_rate = config['learning_rate']
+    decay_rate = config['decay_rate']
+    epsilon = config['epsilon']
+    cache = config['cache']
+
+    cache = (decay_rate*cache) + (1-decay_rate)* np.power(dw,2)
+    next_w =w - (learning_rate * dw / (np.sqrt(cache) + epsilon))
+
+    config["cache"] = cache
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
