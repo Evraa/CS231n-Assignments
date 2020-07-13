@@ -279,7 +279,7 @@ def batchnorm_backward(dout, cache):
     # might prove to be helpful.                                              #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    upstream = dout
+    upstream = np.copy(dout)
     N,D = dout.shape
     #1- dbeta..simple addition, local_grad = 1
     dbeta = np.sum(upstream,axis=0)
