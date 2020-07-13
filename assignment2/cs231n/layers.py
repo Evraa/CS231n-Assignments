@@ -217,13 +217,13 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         bn_param['running_mean'] = running_mean
         bn_param['running_var'] = running_var
 
-        # cache = {
-        #     'x_minus_mean': (x - x_mean),
-        #     'normalized_data': x_norm,
-        #     'gamma': gamma,
-        #     'ivar': 1./np.sqrt(x_var + eps),
-        #     'sqrtvar': np.sqrt(x_var + eps),
-        # }
+        cache = {
+            'x_minus_mean': (x - x_mean),
+            'x_norm': x_norm,
+            'gamma': gamma,
+            'inverse_var': 1./np.sqrt(x_var + eps),
+            'sqrtvar': np.sqrt(x_var + eps),
+        }
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -279,9 +279,49 @@ def batchnorm_backward(dout, cache):
     # might prove to be helpful.                                              #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    upstream = dout
+    N,D = dout.shape
+    #1- dbeta..simple addition, local_grad = 1
+    dbeta = np.sum(upstream,axis=0)
+    
+    #2.1- dgamma...local_grad is x_normalized, from cache
+    dgamma_local_grad = cache['x_norm'] #N,D
+    dgamma = np.sum(dgamma_local_grad*upstream,axis=0)
 
-    pass
+    #2.2- up stream untill gamma
+    upstream *= cache['gamma'] #N,D
+    
+    #3.1- up stream mean, local grad: inverse_var
+    up_stream_mean = (upstream * cache['inverse_var']) #N,D
+    
+    #3.2- upstream variance, local_grad: x_minus_mean
+    up_stream_var = np.sum(upstream * cache['x_minus_mean'],axis=0) #D
 
+    #3.3- upstream variance, local_grad: -1/sqrtvar**2
+    up_stream_var = up_stream_var * (-1/np.power(cache['sqrtvar'],2)) #D,1
+    
+    #3.4- upstream variance, local_grad: inverse_var*0.5
+    up_stream_var = up_stream_var * (cache['inverse_var']*0.5) #D
+    
+    #3.5- upstream variance, local_grad: 1/N I (N,D)
+    up_stream_var = up_stream_var * (1/N) * np.ones([N,D]) #N,D
+
+    #3.6- upstream variance, local_grad: 2x
+    up_stream_var = up_stream_var * 2 * cache['x_minus_mean']  #N,D
+
+    #4.1- upstream x_mean, local_grad: -1
+    up_stream_var_and_minus_mean = up_stream_var + up_stream_mean #N,D
+    up_stream_mean = np.sum(up_stream_var_and_minus_mean,axis=0) * -1 #D
+
+    #4.2- upstream x, local_grad: 1
+    up_stream_x = up_stream_var_and_minus_mean #N,D
+
+    #4.3- upstream x_mean, local_grad: 1/N I (N,D)
+    up_stream_mean =up_stream_mean * (1/N) * np.ones([N,D]) #N,D
+    
+    #5- derv of x, sum of up_stream_x and upstream_x_mean
+    dx = up_stream_mean + up_stream_x
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
