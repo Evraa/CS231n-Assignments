@@ -414,8 +414,15 @@ def layernorm_forward(x, gamma, beta, ln_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # x_mean = np.mean(x, axis=0)
+    # x_var = np.var(x, axis=0)
+    # x_norm = (x-x_mean)/np.sqrt(x_var+eps)
+    # out = (gamma*x_norm) + beta
 
+    x_ln = x.T
+    ln_param["mode"] = "train"
+    out, cache = batchnorm_forward(x_ln, gamma.reshape(-1,1), beta.reshape(-1,1), ln_param)
+    out = out.T
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
