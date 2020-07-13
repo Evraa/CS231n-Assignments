@@ -149,6 +149,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     an exponential decay based on the momentum parameter:
 
     running_mean = momentum * running_mean + (1 - momentum) * sample_mean
+
     running_var = momentum * running_var + (1 - momentum) * sample_var
 
     Note that the batch normalization paper suggests a different test-time
@@ -206,7 +207,23 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        x_mean = np.mean(x, axis=0)
+        x_var = np.var(x, axis=0)
+        x_norm = (x-x_mean)/np.sqrt(x_var+eps)
+        out = (gamma*x_norm) + beta
+
+        running_mean = (momentum * running_mean) + ( (1 - momentum) * x_mean )
+        running_var = (momentum * running_var) + ( (1 - momentum) * x_var)
+        bn_param['running_mean'] = running_mean
+        bn_param['running_var'] = running_var
+
+        # cache = {
+        #     'x_minus_mean': (x - x_mean),
+        #     'normalized_data': x_norm,
+        #     'gamma': gamma,
+        #     'ivar': 1./np.sqrt(x_var + eps),
+        #     'sqrtvar': np.sqrt(x_var + eps),
+        # }
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -221,8 +238,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
-
+        out_1 = (x - running_mean)/np.sqrt(running_var + eps)
+        out = (out_1*gamma) + beta
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
         #                          END OF YOUR CODE                           #
