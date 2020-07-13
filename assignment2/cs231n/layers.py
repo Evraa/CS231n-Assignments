@@ -254,7 +254,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     return out, cache
 
 
-def batchnorm_backward(dout, cache):
+def batchnorm_backward(dout, cache, ax = 0):
     """
     Backward pass for batch normalization.
 
@@ -282,11 +282,11 @@ def batchnorm_backward(dout, cache):
     upstream = np.copy(dout)
     N,D = dout.shape
     #1- dbeta..simple addition, local_grad = 1
-    dbeta = np.sum(upstream,axis=0)
+    dbeta = np.sum(upstream,axis=ax)
     
     #2.1- dgamma...local_grad is x_normalized, from cache
     dgamma_local_grad = cache['x_norm'] #N,D
-    dgamma = np.sum(dgamma_local_grad*upstream,axis=0)
+    dgamma = np.sum(dgamma_local_grad*upstream,axis=ax)
 
     #2.2- up stream untill gamma
     upstream *= cache['gamma'] #N,D
@@ -360,7 +360,6 @@ def batchnorm_backward_alt(dout, cache):
     inverse_var = cache['inverse_var']
 
     N,_ = dout.shape
-
     dbeta = np.sum(dout, axis=0)
     dgamma = np.sum(dout*x_norm, axis=0)
     
@@ -455,9 +454,8 @@ def layernorm_backward(dout, cache):
     # still apply!                                                            #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
-
+    dx, dgamma, dbeta = batchnorm_backward(dout.T, cache, 1)
+    dx = dx.T
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
