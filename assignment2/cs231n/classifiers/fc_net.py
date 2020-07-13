@@ -211,7 +211,6 @@ class FullyConnectedNet(object):
         self.num_layers = 1 + len(hidden_dims)
         self.dtype = dtype
         self.params = {}
-
         ############################################################################
         # TODO: Initialize the parameters of the network, storing all values in    #
         # the self.params dictionary. Store weights and biases for the first layer #
@@ -232,6 +231,11 @@ class FullyConnectedNet(object):
             w_i = "W" + str(i+1)
             self.params[w_i] = np.random.normal(0, weight_scale,[first_dim, hidden_dims[i]])
             first_dim = hidden_dims[i]
+
+            if self.normalization == "batchnorm":
+                self.params['beta' + str(i+1)] = np.zeros([hidden_dims[i]])
+                self.params['gamma' + str(i+1)] = np.ones([hidden_dims[i]])
+
         #Last layer
         b_last = "b" + str(self.num_layers)
         w_last = "W" + str(self.num_layers)
@@ -239,7 +243,6 @@ class FullyConnectedNet(object):
         self.params[b_last] = np.zeros([num_classes])
         self.params[w_last] = np.random.normal(0, weight_scale,[first_dim, num_classes])
         
-
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -303,14 +306,20 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         scores_cache = {}
+        bn_cache = {}
         #Caclculate regularization : np.sum(W1*W1) + np.sum(W2*W2)
         reg_sum = 0
         #A: activation
         actv = copy.deepcopy(X)
         for i in range (self.num_layers - 1):
-
             L, L_cache = affine_forward(actv, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
-            L_ReLu, ReLU_cahce = relu_forward(L)
+            if self.normalization == "batchnorm":
+                
+                L_bn, bn_cache['bn_cache'+str(i+1)]= batchnorm_forward(L, \
+                    self.params['gamma'+str(i+1)], self.params['beta'+str(i+1)], self.bn_params[i])
+                L_ReLu, ReLU_cahce = relu_forward(L_bn)
+            else:
+                L_ReLu, ReLU_cahce = relu_forward(L)
 
             scores_cache["L_cache_"+str(i+1)] = L_cache
             scores_cache["ReLU_cahce_"+str(i+1)] = ReLU_cahce
@@ -329,7 +338,6 @@ class FullyConnectedNet(object):
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
-
         # If test mode return early
         if mode == "test":
             # print ("test: your score is: ",scores)
@@ -369,8 +377,16 @@ class FullyConnectedNet(object):
             ReLU_cahce = scores_cache["ReLU_cahce_"+str(i)]
             dReLU = relu_backward(dx_final, ReLU_cahce)
             
-            L_cache = scores_cache["L_cache_"+str(i)]
-            dx, dw, db = affine_backward(dReLU, L_cache)
+            if self.normalization == "batchnorm":
+                dReLU_bn, dgamma, dbeta = batchnorm_backward_alt(dReLU, bn_cache['bn_cache'+str(i)])
+                grads['beta' + str(i)] = dbeta
+                grads['gamma' + str(i)] = dgamma
+                L_cache = scores_cache["L_cache_"+str(i)]
+                dx, dw, db = affine_backward(dReLU_bn, L_cache)
+
+            else:
+                L_cache = scores_cache["L_cache_"+str(i)]
+                dx, dw, db = affine_backward(dReLU, L_cache)
 
             grads['W'+str(i)] = dw + self.reg*self.params['W'+str(i)]
             grads['b'+str(i)] = db
