@@ -14,3 +14,5 @@ Solutions for CS231n assignments
 ## [Assignment 2](https://github.com/Evraa/CS231n-Assignments/tree/master/assignment2)
 
 ### [Fully Connected Nets](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/FullyConnectedNets.ipynb)
+
+### [Batch/Layer Normalization](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/BatchNormalization.ipynb)
