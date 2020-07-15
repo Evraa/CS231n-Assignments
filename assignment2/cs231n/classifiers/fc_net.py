@@ -307,6 +307,7 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         scores_cache = {}
         bn_cache = {}
+        do_cache = {}
         #Caclculate regularization : np.sum(W1*W1) + np.sum(W2*W2)
         reg_sum = 0
         #A: activation
@@ -314,13 +315,15 @@ class FullyConnectedNet(object):
         for i in range (self.num_layers - 1):
             L, L_cache = affine_forward(actv, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
             if self.normalization == "batchnorm":
-                
                 L_bn, bn_cache['bn_cache'+str(i+1)]= batchnorm_forward(L, \
                     self.params['gamma'+str(i+1)], self.params['beta'+str(i+1)], self.bn_params[i])
                 L_ReLu, ReLU_cahce = relu_forward(L_bn)
             else:
                 L_ReLu, ReLU_cahce = relu_forward(L)
 
+            if self.use_dropout:
+                L_do, do_cache['do_cache'+str(i+1)] = dropout_forward(L_ReLu, self.dropout_param)
+                L_ReLu = L_do
             scores_cache["L_cache_"+str(i+1)] = L_cache
             scores_cache["ReLU_cahce_"+str(i+1)] = ReLU_cahce
             this_W = self.params['W'+str(i+1)]
@@ -374,6 +377,10 @@ class FullyConnectedNet(object):
             #L = 3 -> 2,1
             #Relu
             #affine
+
+            if self.use_dropout:
+                do_dx_final = dropout_backward(dx_final, do_cache["do_cache"+str(i)])
+                dx_final = do_dx_final
             ReLU_cahce = scores_cache["ReLU_cahce_"+str(i)]
             dReLU = relu_backward(dx_final, ReLU_cahce)
             
