@@ -598,19 +598,53 @@ def conv_forward_naive(x, w, b, conv_param):
     F,C,HH,WW = w.shape
     stride = conv_param['stride']
     pad = conv_param['pad']
-    out_h =  int(1 + (H + 2 * pad - HH) / stride)
-    out_w =  int(1 + (W + 2 * pad - WW) / stride)
-    out = np.zeros([out_h,out_w,F]) #[H`,W`,F]
+
+    out_h =  (1 + (H + 2 * pad - HH) / stride)
+    out_w =  (1 + (W + 2 * pad - WW) / stride)
+    assert  out_h.is_integer() and out_w.is_integer(),\
+        f"output h or/and w are not integers! {out_h}, {out_w}"
+
+    out_h = int(out_h)
+    out_w = int(out_w)
+    out = np.zeros([N,F,out_h,out_w]) #[N,F,H`,W`]
+
     #pad the input
+    h_pad = H+(2*pad)
+    w_pad = W+(2*pad)
     if pad > 0:
-        h_pad = H+(2*pad)
-        w_pad = W+(2*pad)
         x_pad = np.zeros([N, C,h_pad, w_pad])
-        x_pad[:,:,1:h_pad-1,1:w_pad-1] = x
+        print (f'Padding with pad = {pad}, older shape was {x.shape}, new shape will be {x_pad.shape}.')
+        x_pad[:,:, pad:(h_pad-pad), pad:(w_pad-pad) ] = x #The data part
         x = np.copy(x_pad)
 
+    print (f'Filters shape: {w.shape}')
+    print (f'Output shape: {out.shape}')
+    # padding all input data: alternative method!
+    # x_pad = np.pad(x, ((0,0), (0,0),(pad,pad),(pad,pad)), 'constant')
+    # H_pad, W_pad = x_pad.shape[2], x_pad.shape[3]    
     
+    w_row = w.reshape(F, (C*HH*WW))  #F , 48
+     
+    x_col = np.zeros((C*HH*WW, out_h*out_w))   #[3*4*4 , 4]
+    
+    #For each example
+    #this 1 will be N
+    for ex in range (N):
+        #for each filter
+        col = 0
 
+        #Extracting the x's
+        for i in range (0, h_pad - HH + 1, stride): #6-4+1
+            for j in range (0, w_pad - WW + 1, stride):
+
+                x_col[:,col] = x_pad[ex,:, i:i+HH, j:j+WW ].reshape(C*HH*WW)
+
+                col += 1
+        #mul xs with filters
+        #(1, F, h_out, w_out)
+        out[ex] = (w_row.dot(x_col) + b.reshape(F,1)).reshape(F, out_h, out_w)
+        
+       
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
