@@ -720,7 +720,7 @@ def conv_backward_naive(dout, cache, verbose = False):
 
                 x_col[:,neuron] = x_pad[index,:,i:i+HH,j:j+WW].reshape(C*HH*WW)
                 neuron += 1
-                
+
         dx[index] = dx_cur[:,pad:-pad, pad:-pad]
         dw += out_col.dot(x_col.T).reshape(F,C,HH,WW)
         db += out_col.sum(axis=1)
@@ -734,7 +734,7 @@ def conv_backward_naive(dout, cache, verbose = False):
     return dx, dw, db
 
 
-def max_pool_forward_naive(x, pool_param):
+def max_pool_forward_naive(x, pool_param, verbose = False):
     """
     A naive implementation of the forward pass for a max-pooling layer.
 
@@ -759,12 +759,38 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N,C,H,W = x.shape
+    stride = pool_param['stride']
+    HH = pool_param['pool_height']
+    WW = pool_param['pool_width']
 
-    # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+
+    out_h =  (1 + (H - HH) / stride)
+    out_w =  (1 + (W - WW) / stride)
+    assert  out_h.is_integer() and out_w.is_integer(),\
+        f"output h or/and w are not integers! {out_h}, {out_w}"
+
+    out_h = int(out_h)
+    out_w = int(out_w)
+    out = np.zeros([N,C,out_h,out_w]) #[N,C, H`,W`]
+
+    if verbose:
+        print (f'X shape: {x.shape}')
+        print (f'Filters shape: {(HH,WW)}')
+        print (f'Output shape: {out.shape}')
+
+    
+    # #For each example
+    # #this 1 will be N
+    for ex in range (N):
+        out_col = np.zeros((C, out_h*out_w))
+        col = 0
+        for i in range (0, H - HH + 1, stride): 
+            for j in range (0, W-WW + 1, stride):
+                pool_region= x[ex,:, i:i+HH, j:j+WW ].reshape(C, HH*WW) 
+                out_col[:,col] = pool_region.max(axis=1)
+                col += 1
+        out[ex] = out_col.reshape(C, out_h,out_w)
     cache = (x, pool_param)
     return out, cache
 
