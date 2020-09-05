@@ -18,3 +18,5 @@ Solutions for CS231n assignments
 ### [Batch/Layer Normalization](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/BatchNormalization.ipynb)
 
 ### [Dropout](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/Dropout.ipynb)
+
+### [CNN](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/ConvolutionalNetworks.ipynb)
