@@ -4,7 +4,7 @@ import numpy as np
 from ..layers import *
 from ..fast_layers import *
 from ..layer_utils import *
-
+import copy
 
 class ThreeLayerConvNet(object):
     """
@@ -123,8 +123,17 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # conv - relu - 2x2 max pool - 
+        #     affine(FC) - relu - 
+        #         affine(FC) - softmax
 
+        #layer_1_cache = (conv_cache, relu_cache, pool_cache)
+        layer_1_out, layer_1_cache = conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+        #layer_2_cache = (fc_cache, relu_cache)
+        layer_2_out, layer_2_cache = affine_relu_forward(layer_1_out, W2, b2)
+        #layer_3_cache = (x, w, b)
+        layer_3_out, layer_3_cache = affine_forward(layer_2_out, W3, b3)
+        scores =  copy.deepcopy(layer_3_out)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -146,8 +155,23 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, derv_soft = softmax_loss(scores, y)
+        loss += 0.5*self.reg*(np.sum(W1*W1) + np.sum(W2*W2) + np.sum(W3*W3)) 
 
+        #GRAD
+        dx3, dw3, db3 = affine_backward(derv_soft, layer_3_cache)
+        
+        dx2, dw2, db2 = affine_relu_backward(dx3, layer_2_cache)
+        
+        _, dw1, db1 = conv_relu_pool_backward(dx2, layer_1_cache)
+
+        grads['W3'] = dw2 + self.reg*self.params['W3']
+        grads['W2'] = dw2 + self.reg*self.params['W2']
+        grads['W1'] = dw1 + self.reg*self.params['W1']
+
+        grads['b1'] = db1
+        grads['b2'] = db2
+        grads['b3'] = db3
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
