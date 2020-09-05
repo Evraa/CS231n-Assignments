@@ -67,7 +67,7 @@ class ThreeLayerConvNet(object):
         C, H, W = input_dim
         H_final = ((H - 2)/2)+1 
         W_final = ((W - 2)/2)+1 
-        conv_pool_size = H_final* W_final* num_filters
+        conv_pool_size = int(H_final* W_final* num_filters)
         b1 = np.zeros([num_filters])
         b2 = np.zeros([hidden_dim])
         b3 = np.zeros([num_classes])
@@ -165,7 +165,7 @@ class ThreeLayerConvNet(object):
         
         _, dw1, db1 = conv_relu_pool_backward(dx2, layer_1_cache)
 
-        grads['W3'] = dw2 + self.reg*self.params['W3']
+        grads['W3'] = dw3 + self.reg*self.params['W3']
         grads['W2'] = dw2 + self.reg*self.params['W2']
         grads['W1'] = dw1 + self.reg*self.params['W1']
 
