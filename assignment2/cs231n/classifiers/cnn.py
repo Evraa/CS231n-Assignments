@@ -10,7 +10,9 @@ class ThreeLayerConvNet(object):
     """
     A three-layer convolutional network with the following architecture:
 
-    conv - relu - 2x2 max pool - affine - relu - affine - softmax
+    conv - relu - 2x2 max pool - 
+        affine(FC) - relu - 
+            affine(FC) - softmax
 
     The network operates on minibatches of data that have shape (N, C, H, W)
     consisting of N images, each with height H and width W and with C input
@@ -62,8 +64,27 @@ class ThreeLayerConvNet(object):
         # the start of the loss() function to see how that happens.                #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        C, H, W = input_dim
+        H_final = ((H - 2)/2)+1 
+        W_final = ((W - 2)/2)+1 
+        conv_pool_size = H_final* W_final* num_filters
+        b1 = np.zeros([num_filters])
+        b2 = np.zeros([hidden_dim])
+        b3 = np.zeros([num_classes])
 
-        pass
+
+        #F, C, H, W
+        W1 = np.random.normal(0, weight_scale,[num_filters,C,filter_size, filter_size ])
+        W2 = np.random.normal(0, weight_scale,[conv_pool_size,hidden_dim  ])
+        W3 = np.random.normal(0, weight_scale,[hidden_dim, num_classes])
+
+        self.params['W1'] = W1
+        self.params['W2'] = W2
+        self.params['W3'] = W3
+        self.params['b1'] = b1
+        self.params['b2'] = b2
+        self.params['b3'] = b3
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
