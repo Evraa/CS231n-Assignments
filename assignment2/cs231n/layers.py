@@ -559,7 +559,7 @@ def dropout_backward(dout, cache):
     return dx
 
 
-def conv_forward_naive(x, w, b, conv_param):
+def conv_forward_naive(x, w, b, conv_param, verbose = False):
     """
     A naive implementation of the forward pass for a convolutional layer.
 
@@ -613,12 +613,13 @@ def conv_forward_naive(x, w, b, conv_param):
     w_pad = W+(2*pad)
     if pad > 0:
         x_pad = np.zeros([N, C,h_pad, w_pad])
-        print (f'Padding with pad = {pad}, older shape was {x.shape}, new shape will be {x_pad.shape}.')
+        if verbose:
+            print (f'Padding with pad = {pad}, older shape was {x.shape}, new shape will be {x_pad.shape}.')
         x_pad[:,:, pad:(h_pad-pad), pad:(w_pad-pad) ] = x #The data part
         x = np.copy(x_pad)
-
-    print (f'Filters shape: {w.shape}')
-    print (f'Output shape: {out.shape}')
+    if verbose:
+        print (f'Filters shape: {w.shape}')
+        print (f'Output shape: {out.shape}')
     # padding all input data: alternative method!
     # x_pad = np.pad(x, ((0,0), (0,0),(pad,pad),(pad,pad)), 'constant')
     # H_pad, W_pad = x_pad.shape[2], x_pad.shape[3]    
@@ -649,11 +650,11 @@ def conv_forward_naive(x, w, b, conv_param):
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-    cache = (x, w, b, conv_param)
+    cache = (x_pad, w, b, conv_param)
     return out, cache
 
 
-def conv_backward_naive(dout, cache):
+def conv_backward_naive(dout, cache, verbose = False):
     """
     A naive implementation of the backward pass for a convolutional layer.
 
@@ -665,6 +666,12 @@ def conv_backward_naive(dout, cache):
     - dx: Gradient with respect to x
     - dw: Gradient with respect to w
     - db: Gradient with respect to b
+
+    dw: is the conv between X and dout (upstream local gradient)
+    dx: can be represented as ‘full’ convolution between a 180-degree rotated Filter F (w_T) and dout (upstream local gradient)
+    
+    refer to this:
+    https://medium.com/@pavisj/convolutions-and-backpropagations-46026a8f5d2c
     """
     dx, dw, db = None, None, None
     ###########################################################################
@@ -672,7 +679,53 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    (x_pad, w, b,conv_param) = cache
+
+    N,C,H_pad,W_pad = x_pad.shape
+    F,C,HH,WW = w.shape
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+    N, F, outH, outW = dout.shape
+
+    
+    dx = np.zeros((N, C, H_pad-2*pad, W_pad-2*pad))     #(4, 3, 5, 5)
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+    if verbose:
+        print (f'X_pad shape: {x_pad.shape}')       #(4, 3, 7, 7)
+        print (f'w shape: {w.shape}')               #(2, 3, 3, 3)
+        print (f'upstream shape: {dout.shape}')     #(4, 2, 5, 5)
+        print (f'dx shape: {dx.shape}')
+        print (f'dw shape: {dw.shape}')
+        print (f'db shape: {db.shape}')
+
+
+    # create w_row matrix
+    w_row = w.reshape(F, C*HH*WW)                           
+
+    # create x_col matrix with values that each neuron is connected to
+    x_col = np.zeros((C*HH*WW, outH*outW))                   
+
+    for index in range(N):
+        out_col = dout[index].reshape(F, outH*outW)          #[F x H'*W']
+        w_out = w_row.T.dot(out_col)                         #[C*FH*FW x H'*W']
+        
+        dx_cur = np.zeros((C, H_pad, W_pad))
+
+        neuron = 0
+        for i in range(0, H_pad-HH+1, stride):
+            for j in range(0, W_pad-WW+1, stride):
+
+                dx_cur[:,i:i+HH,j:j+WW] += w_out[:,neuron].reshape(C,HH,WW)
+
+                x_col[:,neuron] = x_pad[index,:,i:i+HH,j:j+WW].reshape(C*HH*WW)
+                neuron += 1
+                
+        dx[index] = dx_cur[:,pad:-pad, pad:-pad]
+        dw += out_col.dot(x_col.T).reshape(F,C,HH,WW)
+        db += out_col.sum(axis=1)
+
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
