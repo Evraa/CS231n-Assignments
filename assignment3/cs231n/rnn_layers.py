@@ -36,8 +36,8 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
-
+    next_h = np.tanh(x.dot(Wx) + prev_h.dot(Wh) + b)
+    cache = (next_h, prev_h, Wh, x, Wx, b)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -69,8 +69,23 @@ def rnn_step_backward(dnext_h, cache):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
 
+    next_h, prev_h, Wh, x, Wx, b = cache
+
+    # Backprop dnext_h through the tanh function first, derivative of tanh is 1-tanh^2.
+    # local drv: (1 - np.square(next_h))
+    # upstream: dnext_h
+    dtanh = (1 - np.square(next_h)) * dnext_h
+
+    db = np.sum(dtanh, axis=0)
+
+    dWh = np.dot(prev_h.T, dtanh)
+
+    dprev_h = np.dot(dtanh, Wh.T)
+
+    dWx = np.dot(x.T, dtanh)
+
+    dx = np.dot(dtanh, Wx.T)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -104,13 +119,21 @@ def rnn_forward(x, h0, Wx, Wh, b):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, T, D = x.shape
+    H = h0.shape[1]
+    h = np.zeros([N,T,H])
+    caches = [] 
+    prev_h = h0
+    for t in range(T):
 
+        prev_h, cache = rnn_step_forward(x[:,t,:], prev_h, Wx, Wh, b)
+        h[:, t,:] = prev_h
+        caches.append(cache)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
-    return h, cache
+    return h, caches
 
 
 def rnn_backward(dh, cache):
@@ -126,11 +149,11 @@ def rnn_backward(dh, cache):
     by calling rnn_step_backward in a loop).
 
     Returns a tuple of:
-    - dx: Gradient of inputs, of shape (N, T, D)
-    - dh0: Gradient of initial hidden state, of shape (N, H)
-    - dWx: Gradient of input-to-hidden weights, of shape (D, H)
-    - dWh: Gradient of hidden-to-hidden weights, of shape (H, H)
-    - db: Gradient of biases, of shape (H,)
+    - dx:   Gradient of inputs, of shape (N, T, D)
+    - dh0:  Gradient of initial hidden state, of shape (N, H)
+    - dWx:  Gradient of input-to-hidden weights, of shape (D, H)
+    - dWh:  Gradient of hidden-to-hidden weights, of shape (H, H)
+    - db:   Gradient of biases, of shape (H,)
     """
     dx, dh0, dWx, dWh, db = None, None, None, None, None
     ##############################################################################
@@ -140,7 +163,35 @@ def rnn_backward(dh, cache):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, T, H = dh.shape
+    next_h, prev_h, Wh, x, Wx, b = cache[0]
+    D, H = Wx.shape
+
+    # Initialise gradients.
+    dx = np.zeros([N, T, D])
+    dWx = np.zeros_like(Wx)
+    dWh = np.zeros_like(Wh)
+    db = np.zeros_like(b)
+    dprev_h = np.zeros_like(prev_h)
+
+
+
+    for t in reversed(range(T)):
+
+        # Add the current timestep upstream gradient to previous calculated dh
+        cur_dh = dprev_h + dh[:,t,:]
+
+        # Calculate gradients at this time step.
+        dx[:, t, :], dprev_h, dWx_temp, dWh_temp, db_temp = rnn_step_backward(cur_dh, cache[t])
+
+        # Add gradient contributions from each time step.
+        dWx += dWx_temp
+        dWh += dWh_temp
+        db += db_temp
+
+    # dh0 is the last hidden state gradient calculated.
+    dh0 = dprev_h
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################

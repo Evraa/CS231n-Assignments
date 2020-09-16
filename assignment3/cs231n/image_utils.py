@@ -8,7 +8,7 @@ import urllib.request, urllib.error, urllib.parse, os, tempfile
 import numpy as np
 from imageio import imread
 from PIL import Image
-
+import time
 """
 Utility functions used for viewing and processing images.
 """
@@ -64,9 +64,12 @@ def image_from_url(url):
     """
     try:
         f = urllib.request.urlopen(url)
-        _, fname = tempfile.mkstemp()
+        tempo= open("tempo.txt","w+")
+        tempo.close()
+        fname = "tempo.txt"
         with open(fname, "wb") as ff:
             ff.write(f.read())
+        
         img = imread(fname)
         os.remove(fname)
         return img
@@ -75,7 +78,7 @@ def image_from_url(url):
     except urllib.error.HTTPError as e:
         print("HTTP Error: ", e.code, url)
 
-
+    
 def load_image(filename, size=None):
     """Load and resize an image from disk.
 
