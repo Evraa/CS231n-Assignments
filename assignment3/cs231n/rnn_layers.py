@@ -320,8 +320,25 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    A = x.dot(Wx) + prev_h.dot(Wh) + b
+    H = prev_h.shape[1]
 
+    ai = A[:, :H]
+    af = A[:, H:(2*H)]
+    ao = A[:, (2*H):(3*H)]
+    ag = A[:, (3*H):]
+
+    i = sigmoid(ai)
+    f = sigmoid(af)
+    o = sigmoid(ao)
+    g = np.tanh(ag)
+
+    next_c = (f * prev_c) + (i * g)
+    
+    next_h = o * np.tanh(next_c)
+
+    #for backprop
+    cache = (x, Wx, Wh, b, prev_h, prev_c, i, f, o, g, next_c, next_h)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -356,8 +373,43 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, Wx, Wh, b, prev_h, prev_c, i, f, o, g, next_c, next_h = cache
 
+    # Backprop dnext_h through the multiply gate.
+    dh_tanh = dnext_h * o #tmam next_c
+    da_o_partial = dnext_h * np.tanh(next_c) #tmam Og
+
+    # Backprop dh_tanh through the tanh function.
+    # derivative of tanch function
+    dtanh = dh_tanh * (1 - np.square(np.tanh(next_c))) #tmam next_C
+
+    # We add dnext_c and dtanh as during forward pass we split activation (gradients add up at forks).
+    dtanh_dc = (dnext_c + dtanh) #m4 fahm!
+
+    # Backprop dtanh_dc to calculate dprev_c.
+    dprev_c = dtanh_dc * f #DONE
+
+    # Backprop dtanh_dc towards each gate.
+    da_i_partial = dtanh_dc * g
+    da_g_partial = dtanh_dc * i
+    da_f_partial = dtanh_dc * prev_c
+
+    # Backprop through gate activation functions to calculate gate derivatives.
+    # sigmoid and tanh
+    da_i = i*(1-i) * da_i_partial
+    da_f = f*(1-f) * da_f_partial
+    da_o = o*(1-o) * da_o_partial
+    da_g = (1-np.square(g)) * da_g_partial
+
+    # Concatenate back up our 4 gate derivatives to get da_vector.
+    da_vector = np.concatenate((da_i, da_f, da_o, da_g), axis=1)
+
+    # Backprop da_vector to get remaining gradients.
+    db = np.sum(da_vector, axis=0)
+    dx = np.dot(da_vector, Wx.T)
+    dWx = np.dot(x.T, da_vector)
+    dprev_h = np.dot(da_vector, Wh.T)
+    dWh = np.dot(prev_h.T, da_vector)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
