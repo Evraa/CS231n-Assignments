@@ -22,3 +22,9 @@ Solutions for CS231n assignments
 ### [CNN](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/ConvolutionalNetworks.ipynb)
 
 ### [PyTorch](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/PyTorch.ipynb)
+
+## [Assignment 3](https://github.com/Evraa/CS231n-Assignments/tree/master/assignment3)
+
+### [RNN](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/RNN_Captioning.ipynb)
+
+### [LSTM](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment2/LSTM_Captioning.ipynb)
