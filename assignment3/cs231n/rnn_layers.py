@@ -222,9 +222,17 @@ def word_embedding_forward(x, W):
     # HINT: This can be done in one line using NumPy's array indexing.           #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    N, T = x.shape
+    _, D = W.shape
+    out = np.zeros([N, T, D])
 
-    pass
+    for i, batch in enumerate(x):
+        out[i] = W[batch,:]
 
+    cache = (x, W)
+    #EASIER WAY:
+    # out = W[x, :]
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -256,7 +264,11 @@ def word_embedding_backward(dout, cache):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, W = cache
+    dW = np.zeros_like(W)
+
+    # Adds the upcoming gradients into the corresponding index from W.
+    np.add.at(dW, x, dout)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################

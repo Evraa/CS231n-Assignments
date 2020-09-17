@@ -20,10 +20,10 @@ class CaptioningRNN(object):
 
     def __init__(
         self,
-        word_to_idx,
-        input_dim=512,
-        wordvec_dim=128,
-        hidden_dim=128,
+        word_to_idx, #[V, D]
+        input_dim=512, #D
+        wordvec_dim=128, #W
+        hidden_dim=128, #H
         cell_type="rnn",
         dtype=np.float32,
     ):
@@ -106,6 +106,7 @@ class CaptioningRNN(object):
         captions_out = captions[:, 1:]
 
         # You'll need this
+        # all but "NULL"
         mask = captions_out != self._null
 
         # Weight and bias for the affine transform from image features to initial
@@ -151,8 +152,45 @@ class CaptioningRNN(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        #Functions to be used
+        #h, caches = rnn_forward(x, h0, Wx, Wh, b)
+        #out, cache = word_embedding_forward(x, W)
 
+        #1- affine to compute the initial hidden state from the image features
+        affine_out, affine_cache = affine_forward(features, W_proj, b_proj)
+        h0 = affine_out
+
+        #2- word embedding layer
+        word_emb_out, word_emb_cache = word_embedding_forward(captions_in,W_embed)
+
+        #3-
+        if self.cell_type == "rnn":
+            h, caches = rnn_forward(word_emb_out, h0, Wx, Wh, b)
+        else:
+            h = None
+            pass
+        
+        #4-
+        temp_out, temp_cache = temporal_affine_forward(h, W_vocab, b_vocab)
+        
+        #5-
+        loss, dx = temporal_softmax_loss(temp_out, captions_out, mask, verbose=False)
+
+
+        #GRADIENT
+        dx, dw_vocab, db_vocab = temporal_affine_backward(dx, temp_cache)
+
+        if self.cell_type == 'rnn':
+           dx, dh0, dWx, dWh, db = rnn_backward(dx, caches)
+        else:
+           dx, dh0, dWx, dWh, db = None, None, None, None, None
+        
+        dW_embed = word_embedding_backward(dx, word_emb_cache)
+
+        dx, dw_proj, db_proj = affine_backward(dh0, affine_cache)
+
+        grads = {'W_vocab':dw_vocab, 'b_vocab':db_vocab, 'Wx':dWx, 'Wh':dWh, 
+                 'b':db, 'W_embed':dW_embed, 'W_proj':dw_proj, 'b_proj':db_proj}
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
