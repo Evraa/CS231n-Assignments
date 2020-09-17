@@ -447,7 +447,20 @@ def lstm_forward(x, h0, Wx, Wh, b):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, T, D = x.shape
+    N, H = h0.shape
+
+    cache = []
+    h = np.zeros([N, T, H])
+
+    # Set initial h and c states.
+    prev_h = h0
+    prev_c = np.zeros_like(h0)
+
+    for time_step in range(T):
+        prev_h, prev_c, cache_temp = lstm_step_forward(x[:,time_step,:], prev_h, prev_c, Wx, Wh, b)
+        h[:, time_step, :] = prev_h  # Store the hidden state for this time step.
+        cache.append(cache_temp)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -479,7 +492,34 @@ def lstm_backward(dh, cache):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, Wx, Wh, b, prev_h, _, _, _, _, _, _, _ = cache[0]
+
+    N, T, H = dh.shape
+    D, _ = Wx.shape
+
+    dx = np.zeros([N, T, D])
+    dprev_h = np.zeros_like(prev_h)
+    dWx = np.zeros_like(Wx)
+    dWh = np.zeros_like(Wh)
+    db = np.zeros_like(b)
+
+    # Initial gradient for cell is all zero.
+    dprev_c = np.zeros_like(dprev_h)
+
+    for time_step in reversed(range(T)):
+
+        # Add the current timestep upstream gradient to previous calculated dh.
+        cur_dh = dprev_h + dh[:,time_step,:]
+
+        dx[:,time_step,:], dprev_h, dprev_c, dWx_temp, dWh_temp, db_temp = lstm_step_backward(cur_dh, dprev_c, cache[time_step])
+
+        # Add gradient contributions from each time step together.
+        db += db_temp
+        dWh += dWh_temp
+        dWx += dWx_temp
+
+    # dh0 is the last hidden state gradient calculated.
+    dh0 = dprev_h
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################

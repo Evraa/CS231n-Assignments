@@ -167,8 +167,8 @@ class CaptioningRNN(object):
         if self.cell_type == "rnn":
             h, caches = rnn_forward(word_emb_out, h0, Wx, Wh, b)
         else:
-            h = None
-            pass
+            h , caches = lstm_forward(word_emb_out, h0, Wx, Wh, b)
+            
         
         #4-
         temp_out, temp_cache = temporal_affine_forward(h, W_vocab, b_vocab)
@@ -183,7 +183,7 @@ class CaptioningRNN(object):
         if self.cell_type == 'rnn':
            dx, dh0, dWx, dWh, db = rnn_backward(dx, caches)
         else:
-           dx, dh0, dWx, dWh, db = None, None, None, None, None
+           dx, dh0, dWx, dWh, db = lstm_backward(dx, caches)
         
         dW_embed = word_embedding_backward(dx, word_emb_cache)
 
@@ -260,15 +260,14 @@ class CaptioningRNN(object):
         h0 = features.dot(W_proj) + b_proj
         V, W = W_embed.shape
         x = np.ones((N, W)) * W_embed[self._start]
-
+        c0 = np.zeros_like(h0)
         for i in range(max_length):
             if self.cell_type == 'rnn':
                next_h, _ = rnn_step_forward(x, h0, Wx, Wh, b)
             else:
-                next_h = None
-            #    next_h, next_c, _ = lstm_step_forward(x, h0, c0, Wx, Wh, b)
-            #    c0 = next_c
-               
+                next_h, next_c, _ = lstm_step_forward(x, h0, c0, Wx, Wh, b)
+                c0 = next_c
+
             out = next_h.dot(W_vocab) + b_vocab
 
             max_indices = out.argmax(axis=1)
