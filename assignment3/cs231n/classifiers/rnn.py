@@ -257,7 +257,25 @@ class CaptioningRNN(object):
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        h0 = features.dot(W_proj) + b_proj
+        V, W = W_embed.shape
+        x = np.ones((N, W)) * W_embed[self._start]
+
+        for i in range(max_length):
+            if self.cell_type == 'rnn':
+               next_h, _ = rnn_step_forward(x, h0, Wx, Wh, b)
+            else:
+                next_h = None
+            #    next_h, next_c, _ = lstm_step_forward(x, h0, c0, Wx, Wh, b)
+            #    c0 = next_c
+               
+            out = next_h.dot(W_vocab) + b_vocab
+
+            max_indices = out.argmax(axis=1)
+            captions[:,i] = max_indices
+            #next x, next h
+            x = W_embed[max_indices]
+            h0 = next_h
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
