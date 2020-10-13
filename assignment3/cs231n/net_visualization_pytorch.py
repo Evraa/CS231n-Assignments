@@ -81,7 +81,23 @@ def make_fooling_image(X, target_y, model):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    itr = 100
+    for i in range (itr):
+        scores = model(X_fooling)
+        target_scores = scores[:, target_y]
+        if torch.argmax(scores) == target_y:
+            print('Stopped at itr: %i' %i)
+            break
+        target_scores.backward()
+
+        dx = X_fooling.grad
+        
+        with torch.no_grad():
+            X_fooling += learning_rate * dx
+        
+        if i%10 == 0:
+            print('Iteration: %i' %i)
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
