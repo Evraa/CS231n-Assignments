@@ -115,8 +115,16 @@ def class_visualization_update_step(img, model, target_y, l2_reg, learning_rate)
     ########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    img = img.requires_grad_()
+    scores = model(img)
+    target_scores = scores[:,target_y]
+    loss = target_scores - (l2_reg * torch.sum(img * img))
+    loss.backward()
+    dx = img.grad
+    with torch.no_grad():
+        img += learning_rate * dx
 
+    return img
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ########################################################################
     #                             END OF YOUR CODE                         #

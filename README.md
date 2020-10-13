@@ -28,3 +28,5 @@ Solutions for CS231n assignments
 ### [RNN](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment3/RNN_Captioning.ipynb)
 
 ### [LSTM](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment3/LSTM_Captioning.ipynb)
+
+### [NetworkVisualization-PyTorch](https://github.com/Evraa/CS231n-Assignments/blob/master/assignment3/NetworkVisualization-PyTorch.ipynb)
