@@ -34,7 +34,12 @@ def compute_saliency_maps(X, y, model):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    scores = model(X)
+    correct_scores = scores.gather(1, y.view(-1, 1)).squeeze()
+    correct_scores.backward(torch.ones(y.shape[0]))
+    dx = np.absolute(X.grad)
+    saliency, _ = torch.max(dx, dim=1)
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
